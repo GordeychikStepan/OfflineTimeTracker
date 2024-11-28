@@ -1,0 +1,110 @@
+﻿<Window x:Class="OfflineTimeTracker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}"
+        xmlns:local="clr-namespace:OfflineTimeTracker"
+        mc:Ignorable="d"
+        Title="Тайм-Трекер" Height="590" Width="873" MinHeight="567" MinWidth="872"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanMinimize">
+
+    <materialDesign:DialogHost Identifier="RootDialog">
+        <Grid Margin="20">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="571*" />
+                <ColumnDefinition Width="265*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Левая часть с основными элементами -->
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Тайм-Трекер" FontSize="24" Margin="0,0,0,20" />
+
+                <TextBox x:Name="TaskDescription" materialDesign:HintAssist.Hint="Описание задачи" Margin="0,0,0,10" MaxLength="40" FontSize="18" />
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <Button x:Name="StartButton" Content="Старт" Click="StartButton_Click" Margin="0,0,10,0"
+                            Style="{StaticResource MaterialDesignRaisedButton}" />
+                    <Button x:Name="StopButton" Content="Стоп" Click="StopButton_Click" IsEnabled="False"
+                            Style="{StaticResource MaterialDesignRaisedButton}" />
+                </StackPanel>
+
+                <!-- Заголовок списка задач -->
+                <TextBlock x:Name="TaskListHeader" Text="Задачи на сегодня:" FontSize="18" Margin="0,20,0,10" />
+
+                <!-- Добавляем скролл для списка задач -->
+                <!-- Список задач -->
+                <ListView x:Name="TaskListView" Height="320" ScrollViewer.CanContentScroll="True">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderThickness="0,0,0,1" BorderBrush="Gray" Padding="5">
+                                <StackPanel Orientation="Vertical" Width="500">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,5">
+                                        <!-- Отображение названия задачи -->
+                                        <TextBlock Text="{Binding Description}" FontWeight="Bold" Width="425" />
+
+                                        <!-- Кнопка "Редактировать" -->
+                                        <Button Width="30" 
+                                                Height="30"
+                                                Margin="5,0,0,0"
+                                                ToolTip="Редактировать"
+                                                Style="{StaticResource MaterialDesignIconButton}"
+                                                Command="{Binding DataContext.EditTaskCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                CommandParameter="{Binding}" >
+
+                                            <materialDesign:PackIcon
+                                                Width="20"
+                                                Height="20"
+                                                Kind="CircleEditOutline"/>
+
+                                        </Button>
+
+                                        <!-- Кнопка "Удалить" -->
+                                        <Button Width="30" 
+                                                Height="30"
+                                                Margin="5,0,0,0"
+                                                ToolTip="Удалить"
+                                                Style="{StaticResource MaterialDesignIconButton}"
+                                                Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                CommandParameter="{Binding}" >
+                                            <materialDesign:PackIcon
+                                                Width="20"
+                                                Height="20"
+                                                Kind="DeleteCircleOutline"/>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <!-- Остальная информация -->
+                                    <TextBlock Text="{Binding StartTime, StringFormat='Начало: {0:HH:mm:ss}'}" />
+                                    <TextBlock Text="{Binding EndTime, StringFormat='Конец: {0:HH:mm:ss}'}" />
+                                    <TextBlock Text="{Binding Duration, StringFormat='Длительность: {0:h\\:mm\\:ss\\.f}'}" />
+
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+            </StackPanel>
+
+            <!-- Правая часть с таймером и календарем -->
+            <StackPanel Grid.Column="1" Margin="20,0,0,0">
+                <!-- Таймер -->
+                <TextBlock Text="Таймер" FontSize="18" Margin="0,0,0,10" />
+                <TextBlock x:Name="TimerTextBlock" Text="00:00:00" FontSize="32" Margin="0,0,0,20" />
+
+                <!-- Календарь -->
+                <Calendar x:Name="DateCalendar" IsTodayHighlighted="True"
+                          Margin="0,0,0,10" SelectedDatesChanged="DateCalendar_SelectedDateChanged" />
+
+                <!-- Кнопка для генерации отчета -->
+                <Button Content="Сформировать отчет" Click="GenerateReportButton_Click"
+                        Style="{StaticResource MaterialDesignRaisedButton}" Margin="0,10,0,0" />
+            </StackPanel>
+
+        </Grid>
+    </materialDesign:DialogHost>
+</Window>
