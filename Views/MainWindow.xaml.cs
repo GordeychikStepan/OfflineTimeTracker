@@ -1,15 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
-using System.Xml;
-using Microsoft.Win32;
 using Newtonsoft.Json;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
-using System.Windows.Input;
 using OfflineTimeTracker.Service;
 using MaterialDesignThemes.Wpf;
 
@@ -28,6 +26,8 @@ namespace OfflineTimeTracker
         private DispatcherTimer dispatcherTimer;
         private TimeSpan elapsedTime;
 
+        private NotifyIcon notifyIcon;
+
         public ICommand EditTaskCommand { get; }
         public ICommand DeleteTaskCommand { get; }
 
@@ -43,6 +43,130 @@ namespace OfflineTimeTracker
             // Инициализация команд
             EditTaskCommand = new RelayCommand(EditTask);
             DeleteTaskCommand = new RelayCommand(DeleteTask);
+
+            // Инициализация NotifyIcon
+            InitializeNotifyIcon();
+
+            // Подписываемся на событие изменения состояния окна
+            this.StateChanged += MainWindow_StateChanged;
+        }
+
+        private void UpdateTrayIconTooltip()
+        {
+            if (isTracking)
+            {
+                // Получаем название текущей задачи
+                string currentTask = TaskDescription.Text;
+                // Форматируем время
+                string formattedTime = elapsedTime.ToString(@"hh\:mm\:ss");
+                // Устанавливаем Tooltip с использованием перевода строки
+                notifyIcon.Text = $"OfflineTimeTracker\n\n{currentTask} - {formattedTime}";
+            }
+            else
+            {
+                // Устанавливаем Tooltip без запущенной задачи
+                notifyIcon.Text = "OfflineTimeTracker\n\nЗадача не запущена";
+            }
+        }
+
+
+        private void InitializeNotifyIcon()
+        {
+            notifyIcon = new NotifyIcon();
+            string iconPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources/time50.ico");
+
+            if (File.Exists(iconPath))
+            {
+                notifyIcon.Icon = new System.Drawing.Icon(iconPath);
+            }
+            else
+            {
+                // Если иконка не найдена, используем стандартную
+                notifyIcon.Icon = System.Drawing.SystemIcons.Application;
+                System.Windows.MessageBox.Show("Иконка не найдена в папке приложения. Будет использована стандартная иконка.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+
+            notifyIcon.Visible = false;
+            notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
+
+            // Создание контекстного меню
+            ContextMenuStrip contextMenu = new ContextMenuStrip();
+
+            // Создание пунктов меню
+            ToolStripMenuItem showItem = new ToolStripMenuItem("Показать");
+            showItem.Click += ShowItem_Click;
+
+            ToolStripMenuItem stopTaskItem = new ToolStripMenuItem("Остановить задачу");
+            stopTaskItem.Click += StopTaskItem_Click;
+
+            ToolStripMenuItem exitItem = new ToolStripMenuItem("Выход");
+            exitItem.Click += ExitItem_Click;
+
+            // Добавление пунктов в контекстное меню
+            contextMenu.Items.Add(showItem);
+            contextMenu.Items.Add(new ToolStripSeparator());
+            contextMenu.Items.Add(stopTaskItem);
+            contextMenu.Items.Add(new ToolStripSeparator());
+            contextMenu.Items.Add(exitItem);
+
+            // Привязка контекстного меню к NotifyIcon
+            notifyIcon.ContextMenuStrip = contextMenu;
+
+            // Устанавливаем начальный Tooltip
+            UpdateTrayIconTooltip();
+        }
+
+
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            if (this.WindowState == WindowState.Minimized)
+            {
+                this.Hide();
+                notifyIcon.Visible = true;
+            }
+            else if (this.WindowState == WindowState.Normal)
+            {
+                notifyIcon.Visible = false;
+            }
+        }
+
+        private void NotifyIcon_DoubleClick(object sender, EventArgs e)
+        {
+            ShowItem_Click(sender, e);
+        }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            notifyIcon.Dispose();
+            base.OnClosing(e);
+        }
+
+        private void ShowItem_Click(object sender, EventArgs e)
+        {
+            this.Show();
+            this.WindowState = WindowState.Normal;
+            this.Activate();
+            notifyIcon.Visible = false;
+        }
+
+        private void StopTaskItem_Click(object sender, EventArgs e)
+        {
+            // Проверяем, идет ли сейчас отслеживание задачи
+            if (isTracking)
+            {
+                StopButton_Click(null, null);
+                System.Windows.MessageBox.Show("Задача остановлена через трее.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show("Нет активной задачи для остановки.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void ExitItem_Click(object sender, EventArgs e)
+        {
+            // Закрываем приложение
+            System.Windows.Application.Current.Shutdown();
         }
 
         private void EditTask(object parameter)
@@ -52,7 +176,7 @@ namespace OfflineTimeTracker
                 // Проверяем корректность параметра
                 if (task == null)
                 {
-                    MessageBox.Show("Задача не найдена!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show("Задача не найдена!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
@@ -71,7 +195,7 @@ namespace OfflineTimeTracker
             }
             else
             {
-                MessageBox.Show("Неверный тип данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show("Неверный тип данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -82,11 +206,11 @@ namespace OfflineTimeTracker
             {
                 if (task == null)
                 {
-                    MessageBox.Show("Задача не найдена!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show("Задача не найдена!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                if (MessageBox.Show($"Вы уверены, что хотите удалить задачу \"{task.Description}\"?",
+                if (System.Windows.MessageBox.Show($"Вы уверены, что хотите удалить задачу \"{task.Description}\"?",
                     "Удаление задачи", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
                     taskEntries.Remove(task);
@@ -96,7 +220,7 @@ namespace OfflineTimeTracker
             }
             else
             {
-                MessageBox.Show("Неверный тип данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show("Неверный тип данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -114,14 +238,18 @@ namespace OfflineTimeTracker
             var now = DateTime.Now;
             elapsedTime = now - startTime;
             TimerTextBlock.Text = elapsedTime.ToString(@"hh\:mm\:ss");
+
+            // Обновляем Tooltip в трее
+            UpdateTrayIconTooltip();
         }
+
 
 
         private void StartButton_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(TaskDescription.Text))
             {
-                MessageBox.Show("Пожалуйста, введите описание задачи перед началом.", "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show("Пожалуйста, введите описание задачи перед началом.", "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -136,6 +264,9 @@ namespace OfflineTimeTracker
                 elapsedTime = TimeSpan.Zero;
                 TimerTextBlock.Text = "00:00:00";
                 dispatcherTimer.Start();
+
+                // Обновляем Tooltip
+                UpdateTrayIconTooltip();
             }
         }
 
@@ -167,6 +298,9 @@ namespace OfflineTimeTracker
                 TimerTextBlock.Text = "00:00:00";
 
                 UpdateTaskListView();
+
+                // Обновляем Tooltip
+                UpdateTrayIconTooltip();
             }
         }
 
@@ -277,7 +411,7 @@ namespace OfflineTimeTracker
 
             if (tasksInPeriod.Count == 0)
             {
-                MessageBox.Show("Нет задач за выбранный период.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("Нет задач за выбранный период.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -362,14 +496,14 @@ namespace OfflineTimeTracker
             }
 
             // Сохранение файла
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog();
             saveFileDialog.Filter = "PDF Files|*.pdf";
             saveFileDialog.FileName = $"Отчет_{startDate:ddMMyyyy}_{endDate:ddMMyyyy}.pdf";
 
             if (saveFileDialog.ShowDialog() == true)
             {
                 document.Save(saveFileDialog.FileName);
-                MessageBox.Show("Отчет успешно сохранен.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("Отчет успешно сохранен.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 

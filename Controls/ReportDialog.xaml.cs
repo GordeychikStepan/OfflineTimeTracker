@@ -10,7 +10,7 @@ namespace OfflineTimeTracker
     /// <summary>
     /// Логика взаимодействия для ReportDialog.xaml
     /// </summary>
-    public partial class ReportDialog : UserControl
+    public partial class ReportDialog : System.Windows.Controls.UserControl
     {
         public ICommand CancelCommand { get; }
         public ICommand GenerateCommand { get; }
@@ -37,7 +37,7 @@ namespace OfflineTimeTracker
         {
             if (StartDatePicker.SelectedDate == null)
             {
-                MessageBox.Show("Пожалуйста, выберите дату.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show("Пожалуйста, выберите дату.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
