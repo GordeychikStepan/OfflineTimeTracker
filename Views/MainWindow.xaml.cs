@@ -29,6 +29,7 @@ namespace OfflineTimeTracker
 
         private NotifyIcon notifyIcon;
 
+
         public ICommand EditTaskCommand { get; }
         public ICommand DeleteTaskCommand { get; }
 
@@ -50,6 +51,33 @@ namespace OfflineTimeTracker
 
             // Подписываемся на событие изменения состояния окна
             this.StateChanged += MainWindow_StateChanged;
+
+            // Обновляем TaskComboBox
+            UpdateTaskComboBox();
+        }
+
+        private void UpdateTaskComboBox()
+        {
+            DateTime now = DateTime.Now.Date;
+            DateTime sevenDaysAgo = now.AddDays(-7);
+
+            var tasksLastSevenDays = taskEntries
+                .Where(task => task.StartTime.Date >= sevenDaysAgo && task.StartTime.Date <= now)
+                .GroupBy(task => task.Description)
+                .Select(g => g.OrderByDescending(task => task.StartTime).First())
+                .OrderByDescending(task => task.StartTime)
+                .ToList();
+
+            TaskComboBox.ItemsSource = tasksLastSevenDays;
+            TaskComboBox.DisplayMemberPath = "Description";
+        }
+
+        private void TaskComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (TaskComboBox.SelectedItem is TaskEntry selectedTask)
+            {
+                TaskDescription.Text = selectedTask.Description;
+            }
         }
 
         private void UpdateTrayIconTooltip()
@@ -192,6 +220,7 @@ namespace OfflineTimeTracker
                     task.Description = newDescription;
                     SaveTasks(); // Сохраняем изменения
                     UpdateTaskListView();
+                    UpdateTaskComboBox();
                 }
             }
             else
@@ -217,6 +246,7 @@ namespace OfflineTimeTracker
                     taskEntries.Remove(task);
                     SaveTasks(); // Сохраняем изменения
                     UpdateTaskListView();
+                    UpdateTaskComboBox();
                 }
             }
             else
@@ -261,6 +291,7 @@ namespace OfflineTimeTracker
                 StartButton.IsEnabled = false;
                 StopButton.IsEnabled = true;
                 TaskDescription.IsEnabled = false;
+                TaskComboBox.IsEnabled = false;
 
                 elapsedTime = TimeSpan.Zero;
                 TimerTextBlock.Text = "00:00:00";
@@ -295,6 +326,8 @@ namespace OfflineTimeTracker
                 StopButton.IsEnabled = false;
                 TaskDescription.Text = string.Empty;
                 TaskDescription.IsEnabled = true;
+                TaskComboBox.SelectedIndex = -1;
+                TaskComboBox.IsEnabled = true;
 
                 TimerTextBlock.Text = "00:00:00";
 
@@ -309,6 +342,7 @@ namespace OfflineTimeTracker
         {
             var json = JsonConvert.SerializeObject(taskEntries, Newtonsoft.Json.Formatting.Indented);
             File.WriteAllText(dataFile, json);
+            UpdateTaskComboBox();
         }
 
         private void LoadTasks()
@@ -324,6 +358,7 @@ namespace OfflineTimeTracker
             }
 
             UpdateTaskListView();
+            UpdateTaskComboBox();
         }
 
         private void UpdateTaskListView()
