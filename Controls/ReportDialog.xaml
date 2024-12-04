@@ -4,27 +4,37 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d" Height="250" Width="444">
     <Grid Margin="10">
         <StackPanel>
             <TextBlock Text="Сформировать отчет" FontSize="24" TextAlignment="Center" Margin="5,0,5,20" />
 
-            <!-- Выбор периода -->
-            <ComboBox x:Name="PeriodTypeComboBox" FontSize="15" SelectedIndex="0" Margin="5,0,5,10">
-                <ComboBoxItem Content="День" />
-                <ComboBoxItem Content="Неделя" />
-                <ComboBoxItem Content="Месяц" />
-            </ComboBox>
+            <!-- Выбор даты начала -->
+            <DatePicker x:Name="StartDatePicker" 
+                        FontSize="15" 
+                        Margin="5,0,5,10"
+                        materialDesign:TextFieldAssist.HasClearButton="True"
+                        materialDesign:HintAssist.Hint="Дата начала" 
+                        Style="{StaticResource MaterialDesignFloatingHintDatePicker}"/>
 
-            <!-- Выбор даты -->
-            <DatePicker x:Name="StartDatePicker" FontSize="15" Margin="5,0,5,20" />
+            <!-- Выбор даты окончания -->
+            <DatePicker x:Name="EndDatePicker" 
+                        FontSize="15" 
+                        Margin="5,0,5,20"
+                        materialDesign:TextFieldAssist.HasClearButton="True"
+                        materialDesign:HintAssist.Hint="Дата окончания" 
+                        SelectedDate="{x:Static sys:DateTime.Now}"
+                        DisplayDateStart="{Binding SelectedDate, ElementName=StartDatePicker}"
+                        Style="{StaticResource MaterialDesignFloatingHintDatePicker}"/>
 
             <!-- Кнопки -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5,50,5,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5,37,5,0">
                 <Button Content="Отмена" Width="100" Margin="0,0,10,0"
                         Style="{StaticResource MaterialDesignFlatButton}" 
                         Command="{Binding CancelCommand}" />
                 <Button Content="Сформировать" Width="140"
+                        IsDefault="True"
                         Style="{StaticResource MaterialDesignRaisedButton}" 
                         Command="{Binding GenerateCommand}" />
             </StackPanel>

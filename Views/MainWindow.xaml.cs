@@ -10,6 +10,7 @@ using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using OfflineTimeTracker.Service;
 using MaterialDesignThemes.Wpf;
+using MessageBox = System.Windows.MessageBox;
 
 namespace OfflineTimeTracker
 {
@@ -83,7 +84,7 @@ namespace OfflineTimeTracker
             {
                 // Если иконка не найдена, используем стандартную
                 notifyIcon.Icon = System.Drawing.SystemIcons.Application;
-                System.Windows.MessageBox.Show("Иконка не найдена в папке приложения. Будет использована стандартная иконка.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Иконка не найдена в папке приложения. Будет использована стандартная иконка.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
             notifyIcon.Visible = false;
@@ -155,11 +156,11 @@ namespace OfflineTimeTracker
             if (isTracking)
             {
                 StopButton_Click(null, null);
-                System.Windows.MessageBox.Show("Задача остановлена через трее.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Задача остановлена через трее.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
-                System.Windows.MessageBox.Show("Нет активной задачи для остановки.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Нет активной задачи для остановки.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -176,7 +177,7 @@ namespace OfflineTimeTracker
                 // Проверяем корректность параметра
                 if (task == null)
                 {
-                    System.Windows.MessageBox.Show("Задача не найдена!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Задача не найдена!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
@@ -195,7 +196,7 @@ namespace OfflineTimeTracker
             }
             else
             {
-                System.Windows.MessageBox.Show("Неверный тип данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Неверный тип данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -206,11 +207,11 @@ namespace OfflineTimeTracker
             {
                 if (task == null)
                 {
-                    System.Windows.MessageBox.Show("Задача не найдена!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Задача не найдена!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                if (System.Windows.MessageBox.Show($"Вы уверены, что хотите удалить задачу \"{task.Description}\"?",
+                if (MessageBox.Show($"Вы уверены, что хотите удалить задачу \"{task.Description}\"?",
                     "Удаление задачи", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
                     taskEntries.Remove(task);
@@ -220,7 +221,7 @@ namespace OfflineTimeTracker
             }
             else
             {
-                System.Windows.MessageBox.Show("Неверный тип данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Неверный тип данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -249,7 +250,7 @@ namespace OfflineTimeTracker
         {
             if (string.IsNullOrWhiteSpace(TaskDescription.Text))
             {
-                System.Windows.MessageBox.Show("Пожалуйста, введите описание задачи перед началом.", "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Пожалуйста, введите описание задачи перед началом.", "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -374,35 +375,15 @@ namespace OfflineTimeTracker
                 return;
             }
 
-            var selectedDate = (DateTime)result.GetType().GetProperty("SelectedDate").GetValue(result);
-            var periodType = (string)result.GetType().GetProperty("PeriodType").GetValue(result);
+            var startDate = (DateTime)result.GetType().GetProperty("StartDate").GetValue(result);
+            var endDate = (DateTime)result.GetType().GetProperty("EndDate").GetValue(result);
 
-            GeneratePDFReport(selectedDate, periodType);
+            GeneratePDFReport(startDate, endDate);
         }
 
 
-        private void GeneratePDFReport(DateTime selectedDate, string periodType)
+        private void GeneratePDFReport(DateTime startDate, DateTime endDate)
         {
-            // Определяем период
-            DateTime startDate = selectedDate.Date;
-            DateTime endDate = selectedDate.Date;
-
-            switch (periodType)
-            {
-                case "День":
-                    endDate = startDate;
-                    break;
-                case "Неделя":
-                    int diff = (7 + (startDate.DayOfWeek - DayOfWeek.Monday)) % 7;
-                    startDate = startDate.AddDays(-1 * diff);
-                    endDate = startDate.AddDays(6);
-                    break;
-                case "Месяц":
-                    startDate = new DateTime(startDate.Year, startDate.Month, 1);
-                    endDate = startDate.AddMonths(1).AddDays(-1);
-                    break;
-            }
-
             // Фильтруем задачи за выбранный период
             var tasksInPeriod = taskEntries
                 .Where(task => task.StartTime.Date >= startDate && task.StartTime.Date <= endDate)
@@ -411,7 +392,7 @@ namespace OfflineTimeTracker
 
             if (tasksInPeriod.Count == 0)
             {
-                System.Windows.MessageBox.Show("Нет задач за выбранный период.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Нет задач за выбранный период.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -503,7 +484,7 @@ namespace OfflineTimeTracker
             if (saveFileDialog.ShowDialog() == true)
             {
                 document.Save(saveFileDialog.FileName);
-                System.Windows.MessageBox.Show("Отчет успешно сохранен.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Отчет успешно сохранен.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
