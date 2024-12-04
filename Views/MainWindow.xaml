@@ -4,12 +4,17 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        DataContext="{Binding RelativeSource={RelativeSource Self}}"
         xmlns:local="clr-namespace:OfflineTimeTracker"
+        xmlns:converters="clr-namespace:OfflineTimeTracker.Service"
         mc:Ignorable="d"
-        Title="Тайм-Трекер" Height="600" Width="873" MinHeight="567" MinWidth="872"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}"
+        Title="Тайм-Трекер" Height="600" Width="873"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanMinimize">
+
+    <Window.Resources>
+        <converters:ProjectDescriptionConverter x:Key="ProjectDescriptionConverter" />
+    </Window.Resources>
 
     <materialDesign:DialogHost Identifier="RootDialog">
         <Grid Margin="5">
@@ -42,7 +47,7 @@
                                      MaxLength="40" FontSize="18" Width="400" 
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"/>
                             <ComboBox x:Name="ProjectComboBox" Width="140" Margin="10,16,0,0"
-                                      SelectionChanged="TaskComboBox_SelectionChanged"
+                                      SelectionChanged="ProjectComboBox_SelectionChanged"
                                       materialDesign:HintAssist.Hint="Последние проекты"
                                       DisplayMemberPath="Description">
                                 <!-- ItemsSource будет задаваться в коде -->
@@ -69,20 +74,25 @@
                     <StackPanel Margin="10">
                         <TextBlock x:Name="TaskListHeader" Text="Задачи на сегодня:" FontSize="18" Margin="0,0,0,5" />
 
+                        <Border BorderThickness="0.7"
+                                Margin="-3,0,-3,0"
+                                CornerRadius="0.3"
+                                BorderBrush="LightGray"/>
+
                         <!-- Список задач -->
-                        <ListView x:Name="TaskListView" Height="330" ScrollViewer.CanContentScroll="True">
+                        <ListView x:Name="TaskListView" Height="328.5" ScrollViewer.CanContentScroll="True">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Border BorderThickness="0,0,0,1" BorderBrush="Gray" Padding="5">
-                                        <StackPanel Orientation="Vertical" Width="500">
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,5">
+                                        <StackPanel Orientation="Vertical" Width="510">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
                                                 <!-- Отображение названия задачи -->
                                                 <TextBlock Text="{Binding Description}" FontWeight="Bold" Width="425" />
 
                                                 <!-- Кнопка "Редактировать" -->
                                                 <Button Width="30" 
                                                         Height="30"
-                                                        Margin="5,0,0,0"
+                                                        Margin="20,0,0,0"
                                                         ToolTip="Редактировать"
                                                         Style="{StaticResource MaterialDesignIconButton}"
                                                         Command="{Binding DataContext.EditTaskCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
@@ -98,7 +108,7 @@
                                                 <!-- Кнопка "Удалить" -->
                                                 <Button Width="30" 
                                                         Height="30"
-                                                        Margin="5,0,0,0"
+                                                        Margin="0,0,0,0"
                                                         ToolTip="Удалить"
                                                         Style="{StaticResource MaterialDesignIconButton}"
                                                         Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
@@ -109,6 +119,9 @@
                                                         Kind="DeleteCircleOutline"/>
                                                 </Button>
                                             </StackPanel>
+
+                                            <!-- Проект -->
+                                            <TextBlock Text="{Binding ProjectDescription, Converter={StaticResource ProjectDescriptionConverter}}" FontWeight="DemiBold" Margin="0,0,0,5" />
 
                                             <!-- Остальная информация -->
                                             <TextBlock Text="{Binding StartTime, StringFormat='Начало: {0:HH:mm:ss}'}" />

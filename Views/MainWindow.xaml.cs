@@ -52,8 +52,9 @@ namespace OfflineTimeTracker
             // Подписываемся на событие изменения состояния окна
             this.StateChanged += MainWindow_StateChanged;
 
-            // Обновляем TaskComboBox
+            // Обновляем ComboBox
             UpdateTaskComboBox();
+            UpdateProjectComboBox();
         }
 
         private void UpdateTaskComboBox()
@@ -72,11 +73,43 @@ namespace OfflineTimeTracker
             TaskComboBox.DisplayMemberPath = "Description";
         }
 
+        private void UpdateProjectComboBox()
+        {
+            DateTime now = DateTime.Now.Date;
+            DateTime sevenDaysAgo = now.AddDays(-7);
+
+            var projectsLastSevenDays = taskEntries
+                .Where(task => task.StartTime.Date >= sevenDaysAgo && task.StartTime.Date <= now)
+                .Where(task => !string.IsNullOrEmpty(task.ProjectDescription))
+                .GroupBy(task => task.ProjectDescription)
+                .Select(g => g.OrderByDescending(task => task.StartTime).First())
+                .OrderByDescending(task => task.StartTime)
+                .ToList();
+
+            ProjectComboBox.ItemsSource = projectsLastSevenDays;
+            ProjectComboBox.DisplayMemberPath = "ProjectDescription";
+        }
+
+
         private void TaskComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (TaskComboBox.SelectedItem is TaskEntry selectedTask)
             {
                 TaskDescription.Text = selectedTask.Description;
+                // Также устанавливаем ProjectDescription, если оно есть
+                if (!string.IsNullOrEmpty(selectedTask.ProjectDescription))
+                {
+                    ProjectDescription.Text = selectedTask.ProjectDescription;
+                }
+            }
+        }
+
+
+        private void ProjectComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ProjectComboBox.SelectedItem is TaskEntry selectedProject)
+            {
+                ProjectDescription.Text = selectedProject.ProjectDescription;
             }
         }
 
@@ -221,6 +254,7 @@ namespace OfflineTimeTracker
                     SaveTasks(); // Сохраняем изменения
                     UpdateTaskListView();
                     UpdateTaskComboBox();
+                    UpdateProjectComboBox();
                 }
             }
             else
@@ -247,6 +281,7 @@ namespace OfflineTimeTracker
                     SaveTasks(); // Сохраняем изменения
                     UpdateTaskListView();
                     UpdateTaskComboBox();
+                    UpdateProjectComboBox();
                 }
             }
             else
@@ -292,6 +327,8 @@ namespace OfflineTimeTracker
                 StopButton.IsEnabled = true;
                 TaskDescription.IsEnabled = false;
                 TaskComboBox.IsEnabled = false;
+                ProjectDescription.IsEnabled = false;
+                ProjectComboBox.IsEnabled = false;
 
                 elapsedTime = TimeSpan.Zero;
                 TimerTextBlock.Text = "00:00:00";
@@ -301,6 +338,7 @@ namespace OfflineTimeTracker
                 UpdateTrayIconTooltip();
             }
         }
+
 
         private void StopButton_Click(object sender, RoutedEventArgs e)
         {
@@ -314,6 +352,7 @@ namespace OfflineTimeTracker
                 var taskEntry = new TaskEntry
                 {
                     Description = TaskDescription.Text,
+                    ProjectDescription = string.IsNullOrWhiteSpace(ProjectDescription.Text) ? null : ProjectDescription.Text,
                     StartTime = startTime,
                     EndTime = endTime,
                     Duration = endTime - startTime
@@ -328,6 +367,10 @@ namespace OfflineTimeTracker
                 TaskDescription.IsEnabled = true;
                 TaskComboBox.SelectedIndex = -1;
                 TaskComboBox.IsEnabled = true;
+                ProjectDescription.Text = string.Empty;
+                ProjectDescription.IsEnabled = true;
+                ProjectComboBox.SelectedIndex = -1;
+                ProjectComboBox.IsEnabled = true;
 
                 TimerTextBlock.Text = "00:00:00";
 
@@ -338,11 +381,14 @@ namespace OfflineTimeTracker
             }
         }
 
+
         private void SaveTasks()
         {
             var json = JsonConvert.SerializeObject(taskEntries, Newtonsoft.Json.Formatting.Indented);
             File.WriteAllText(dataFile, json);
+
             UpdateTaskComboBox();
+            UpdateProjectComboBox();
         }
 
         private void LoadTasks()
@@ -359,6 +405,7 @@ namespace OfflineTimeTracker
 
             UpdateTaskListView();
             UpdateTaskComboBox();
+            UpdateProjectComboBox();
         }
 
         private void UpdateTaskListView()
@@ -523,5 +570,6 @@ namespace OfflineTimeTracker
             }
         }
 
+        
     }
 }
