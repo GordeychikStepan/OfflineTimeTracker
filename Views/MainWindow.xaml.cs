@@ -29,6 +29,8 @@ namespace OfflineTimeTracker
 
         private NotifyIcon notifyIcon;
 
+        private string taskSearchText = string.Empty; // Текст для поиска
+        private string selectedFilterProject = null; // Выбранный проект
 
         public ICommand EditTaskCommand { get; }
         public ICommand DeleteTaskCommand { get; }
@@ -255,6 +257,7 @@ namespace OfflineTimeTracker
                     UpdateTaskListView();
                     UpdateTaskComboBox();
                     UpdateProjectComboBox();
+                    UpdateFilterProjectComboBox();
                 }
             }
             else
@@ -282,6 +285,7 @@ namespace OfflineTimeTracker
                     UpdateTaskListView();
                     UpdateTaskComboBox();
                     UpdateProjectComboBox();
+                    UpdateFilterProjectComboBox();
                 }
             }
             else
@@ -389,6 +393,7 @@ namespace OfflineTimeTracker
 
             UpdateTaskComboBox();
             UpdateProjectComboBox();
+            UpdateFilterProjectComboBox();
         }
 
         private void LoadTasks()
@@ -406,6 +411,7 @@ namespace OfflineTimeTracker
             UpdateTaskListView();
             UpdateTaskComboBox();
             UpdateProjectComboBox();
+            UpdateFilterProjectComboBox();
         }
 
         private void UpdateTaskListView()
@@ -415,13 +421,33 @@ namespace OfflineTimeTracker
 
             DateTime selectedDate = DateCalendar.SelectedDate.Value.Date;
 
-            // Фильтруем задачи по выбранной дате и сортируем по времени начала в порядке убывания
+            // Фильтруем задачи по выбранной дате
             var tasksForSelectedDate = taskEntries
                 .Where(task => task.StartTime.Date == selectedDate)
+                .ToList();
+
+            // Фильтр по тексту поиска
+            if (!string.IsNullOrWhiteSpace(taskSearchText))
+            {
+                tasksForSelectedDate = tasksForSelectedDate
+                    .Where(task => task.Description.IndexOf(taskSearchText, StringComparison.OrdinalIgnoreCase) >= 0)
+                    .ToList();
+            }
+
+            // Фильтр по проекту
+            if (!string.IsNullOrEmpty(selectedFilterProject))
+            {
+                tasksForSelectedDate = tasksForSelectedDate
+                    .Where(task => task.ProjectDescription == selectedFilterProject)
+                    .ToList();
+            }
+
+            // Сортируем задачи
+            tasksForSelectedDate = tasksForSelectedDate
                 .OrderByDescending(task => task.StartTime)
                 .ToList();
 
-            // Обновляем заголовок списка задач
+            // Обновляем заголовок
             if (selectedDate == DateTime.Now.Date)
             {
                 TaskListHeader.Text = "Задачи на сегодня:";
@@ -431,12 +457,66 @@ namespace OfflineTimeTracker
                 TaskListHeader.Text = $"Задачи на {selectedDate:dd MMMM}:";
             }
 
+            // Обновляем ListView
             TaskListView.ItemsSource = null;
             TaskListView.ItemsSource = tasksForSelectedDate;
         }
 
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            taskSearchText = SearchTextBox.Text; // Сохраняем текст поиска
+            UpdateTaskListView(); // Обновляем список задач
+        }
+
+        private void FilterProjectComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (FilterProjectComboBox.SelectedItem != null)
+            {
+                selectedFilterProject = FilterProjectComboBox.SelectedItem.ToString();
+            }
+            else
+            {
+                selectedFilterProject = null;
+            }
+            UpdateTaskListView(); // Обновляем список задач
+        }
+
+        private void ResetFiltersButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Сбрасываем фильтры
+            taskSearchText = string.Empty;
+            selectedFilterProject = null;
+
+            // Очищаем элементы управления
+            SearchTextBox.Text = string.Empty;
+            FilterProjectComboBox.SelectedIndex = -1;
+
+            // Обновляем список задач
+            UpdateTaskListView();
+        }
+
+        private void UpdateFilterProjectComboBox()
+        {
+            if (DateCalendar.SelectedDate == null)
+                return;
+
+            DateTime selectedDate = DateCalendar.SelectedDate.Value.Date;
+
+            var projectsForSelectedDate = taskEntries
+                .Where(task => task.StartTime.Date == selectedDate)
+                .Where(task => !string.IsNullOrEmpty(task.ProjectDescription))
+                .Select(task => task.ProjectDescription)
+                .Distinct()
+                .OrderBy(p => p)
+                .ToList();
+
+            FilterProjectComboBox.ItemsSource = projectsForSelectedDate;
+        }
+
+
         private void DateCalendar_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
         {
+            UpdateFilterProjectComboBox();
             UpdateTaskListView();
         }
 

@@ -71,7 +71,50 @@
 
                 <materialDesign:Card Margin="2" materialDesign:ElevationAssist.Elevation="Dp2">
                     <StackPanel Margin="10">
-                        <TextBlock x:Name="TaskListHeader" Text="Задачи на сегодня:" FontSize="18" Margin="0,0,0,5" />
+                        <Grid VerticalAlignment="Center" Margin="0,-9,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Margin="0,8,0,0" x:Name="TaskListHeader" Text="Задачи на сегодня:" FontSize="18" VerticalAlignment="Center" />
+
+                            <!-- Поле поиска -->
+                            <TextBox x:Name="SearchTextBox"
+                                     Grid.Column="1"
+                                     Margin="5,0,5,0"
+                                     materialDesign:HintAssist.Hint="Поиск задачи"
+                                     TextChanged="SearchTextBox_TextChanged"
+                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
+
+                            <!-- ComboBox для фильтрации проектов -->
+                            <ComboBox x:Name="FilterProjectComboBox"
+                                      Grid.Column="2"
+                                      Margin="5,8,5,0"
+                                      SelectionChanged="FilterProjectComboBox_SelectionChanged"
+                                      materialDesign:HintAssist.Hint="Проект">
+                                <!-- Источник данных задается в коде -->
+                            </ComboBox>
+
+                            <!-- Кнопка сброса фильтров -->
+                            <Button x:Name="ResetFiltersButton"
+                                    Grid.Column="3"
+                                    Width="30" 
+                                    Height="30"
+                                    Margin="40,0,0,0"
+                                    ToolTip="Сброс фильтров"
+                                    Click="ResetFiltersButton_Click"
+                                    Style="{StaticResource MaterialDesignIconButton}">
+                                
+                                <materialDesign:PackIcon
+                                    Width="20"
+                                    Height="20"
+                                    Kind="Refresh"/>
+                            </Button>
+                        </Grid>
+
 
                         <Border BorderThickness="0.7"
                                 Margin="-3,0,-3,0"
@@ -79,9 +122,10 @@
                                 BorderBrush="LightGray"/>
 
                         <!-- Список задач -->
-                        <ListView x:Name="TaskListView" Height="328.5" ScrollViewer.CanContentScroll="True">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
+                        <Grid>
+                            <ListView x:Name="TaskListView" Height="328.5" ScrollViewer.CanContentScroll="True">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
                                     <Border BorderThickness="0,0,0,1" BorderBrush="Gray" Padding="5">
                                         <StackPanel Orientation="Vertical" Width="510">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
@@ -130,8 +174,40 @@
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                            <!-- Текстовое сообщение при отсутствии задач -->
+                            <TextBlock x:Name="NoTasksTextBlock"
+                                       Text="Задач нет 😢"
+                                       FontSize="24"
+                                       FontWeight="Bold"
+                                       Foreground="Gray"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Opacity="0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <!-- Триггер для отображения сообщения, когда список пуст -->
+                                            <DataTrigger Binding="{Binding Items.Count, ElementName=TaskListView}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Setter Property="Opacity" Value="0"/>
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                             From="0" To="1"
+                                                                             Duration="0:0:0.2"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
                     </StackPanel>
                 </materialDesign:Card>
                 
