@@ -217,7 +217,7 @@ namespace OfflineTimeTracker
             if (isTracking)
             {
                 StopButton_Click(null, null);
-                MessageBox.Show("Задача остановлена через трее.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Задача остановлена.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
@@ -496,40 +496,89 @@ namespace OfflineTimeTracker
             PdfPage page = document.AddPage();
             XGraphics gfx = XGraphics.FromPdfPage(page);
             XFont font = new XFont("Verdana", 12, XFontStyleEx.Regular);
+            XFont headerFont = new XFont("Verdana", 12, XFontStyleEx.Bold);
 
             double yPoint = 40;
+            double leftMargin = 40;
+            double rightMargin = 40;
+            double tableWidth = page.Width - leftMargin - rightMargin;
 
             // Заголовок
             gfx.DrawString($"Отчет за период {startDate:dd.MM.yyyy} - {endDate:dd.MM.yyyy}", new XFont("Verdana", 14, XFontStyleEx.Bold), XBrushes.Black,
                 new XRect(0, yPoint, page.Width, page.Height), XStringFormats.TopCenter);
             yPoint += 40;
 
-            // Таблица задач с границами
-            gfx.DrawString("Список задач:", font, XBrushes.Black, new XRect(40, yPoint, page.Width, page.Height), XStringFormats.TopLeft);
+            // Заголовок таблицы задач
+            gfx.DrawString("Список задач:", font, XBrushes.Black, new XRect(leftMargin, yPoint, tableWidth, page.Height), XStringFormats.TopLeft);
             yPoint += 20;
 
             // Размеры столбцов
             double col1Width = 300; // Ширина столбца "Описание задачи"
             double col2Width = 200; // Ширина столбца "Дата и время"
 
+            // Внутренние отступы внутри ячеек
+            double cellPadding = 5;
+
             // Заголовок таблицы
-            gfx.DrawRectangle(XPens.Black, 40, yPoint, col1Width, 20); // Граница для столбца "Описание задачи"
-            gfx.DrawRectangle(XPens.Black, 40 + col1Width, yPoint, col2Width, 20); // Граница для столбца "Дата и время"
-            gfx.DrawString("Задача", font, XBrushes.Black, new XRect(45, yPoint, col1Width, 20), XStringFormats.TopLeft);
-            gfx.DrawString("Дата и время", font, XBrushes.Black, new XRect(45 + col1Width, yPoint, col2Width, 20), XStringFormats.TopLeft);
+            // Рисуем границы заголовка
+            gfx.DrawRectangle(XPens.Black, leftMargin, yPoint, col1Width, 20);
+            gfx.DrawRectangle(XPens.Black, leftMargin + col1Width, yPoint, col2Width, 20);
+
+            // Отображаем заголовки столбцов с отступами
+            gfx.DrawString("Задача", headerFont, XBrushes.Black, new XRect(leftMargin + cellPadding, yPoint + cellPadding, col1Width - 2 * cellPadding, 20 - 2 * cellPadding), XStringFormats.TopLeft);
+            gfx.DrawString("Дата и время", headerFont, XBrushes.Black, new XRect(leftMargin + col1Width + cellPadding, yPoint + cellPadding, col2Width - 2 * cellPadding, 20 - 2 * cellPadding), XStringFormats.TopLeft);
             yPoint += 20;
 
             // Данные таблицы задач
             foreach (var task in tasksInPeriod)
             {
-                gfx.DrawRectangle(XPens.Black, 40, yPoint, col1Width, 20); // Граница для "Описание задачи"
-                gfx.DrawRectangle(XPens.Black, 40 + col1Width, yPoint, col2Width, 20); // Граница для "Дата и время"
+                string taskDescription = task.Description;
+                if (!string.IsNullOrWhiteSpace(task.ProjectDescription))
+                {
+                    taskDescription += $" ({task.ProjectDescription})";
+                }
 
-                gfx.DrawString(task.Description, font, XBrushes.Black, new XRect(45, yPoint, col1Width - 5, 20), XStringFormats.TopLeft);
                 string dateTimeInfo = $"{task.StartTime:dd.MM.yyyy} {task.StartTime:HH:mm} - {task.EndTime:HH:mm}";
-                gfx.DrawString(dateTimeInfo, font, XBrushes.Black, new XRect(45 + col1Width, yPoint, col2Width - 5, 20), XStringFormats.TopLeft);
 
-                yPoint += 20;
+                // Разбиваем текст, если он длиннее 55 символов
+                string[] lines = SplitText(taskDescription, 55);
+                double lineHeight = font.GetHeight();
+                double cellHeight = lines.Length * lineHeight + 2 * cellPadding;
+
+                // Рисуем границы ячеек с учетом высоты
+                gfx.DrawRectangle(XPens.Black, leftMargin, yPoint, col1Width, cellHeight);
+                gfx.DrawRectangle(XPens.Black, leftMargin + col1Width, yPoint, col2Width, cellHeight);
+
+                // Отображаем текст с переносом и отступами
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    gfx.DrawString(lines[i], font, XBrushes.Black, new XRect(leftMargin + cellPadding, yPoint + cellPadding + i * lineHeight, col1Width - 2 * cellPadding, lineHeight), XStringFormats.TopLeft);
+                }
+
+                // Отображаем дату и время с отступами
+                gfx.DrawString(dateTimeInfo, font, XBrushes.Black, new XRect(leftMargin + col1Width + cellPadding, yPoint + cellPadding, col2Width - 2 * cellPadding, cellHeight - 2 * cellPadding), XStringFormats.TopLeft);
+
+                yPoint += cellHeight;
+
+                // Проверка на переход на новую страницу
+                if (yPoint > page.Height - 40)
+                {
+                    page = document.AddPage();
+                    gfx = XGraphics.FromPdfPage(page);
+                    yPoint = 40;
+                }
+            }
+
+            // Итоговое время по задачам
+            yPoint += 20;
+            gfx.DrawString("Итого по задачам:", headerFont, XBrushes.Black, new XRect(leftMargin, yPoint, tableWidth, page.Height), XStringFormats.TopLeft);
+            yPoint += 20;
+
+            foreach (var group in groupedTasks)
+            {
+                gfx.DrawString($"{group.Description} - {group.TotalDuration.Hours} ч {group.TotalDuration.Minutes} мин", font, XBrushes.Black,
+                    new XRect(leftMargin + cellPadding, yPoint + cellPadding, tableWidth - 2 * cellPadding, font.GetHeight()), XStringFormats.TopLeft);
+                yPoint += font.GetHeight() + cellPadding;
 
                 if (yPoint > page.Height - 40)
                 {
@@ -539,16 +588,27 @@ namespace OfflineTimeTracker
                 }
             }
 
-            // Итоговое время
+            // Время по проектам
             yPoint += 20;
-            gfx.DrawString("Итого:", font, XBrushes.Black, new XRect(40, yPoint, page.Width, page.Height), XStringFormats.TopLeft);
+            gfx.DrawString("Время по проектам:", headerFont, XBrushes.Black, new XRect(leftMargin, yPoint, tableWidth, page.Height), XStringFormats.TopLeft);
             yPoint += 20;
 
-            foreach (var group in groupedTasks)
+            var groupedProjects = tasksInPeriod
+                .Where(task => !string.IsNullOrWhiteSpace(task.ProjectDescription))
+                .GroupBy(task => task.ProjectDescription)
+                .Select(group => new
+                {
+                    ProjectDescription = group.Key,
+                    TotalDuration = group.Aggregate(TimeSpan.Zero, (sum, task) => sum.Add(task.Duration))
+                })
+                .OrderByDescending(group => group.TotalDuration)
+                .ToList();
+
+            foreach (var group in groupedProjects)
             {
-                gfx.DrawString($"{group.Description} - {group.TotalDuration.Hours} ч {group.TotalDuration.Minutes} мин", font, XBrushes.Black,
-                    new XRect(40, yPoint, page.Width, page.Height), XStringFormats.TopLeft);
-                yPoint += 20;
+                gfx.DrawString($"{group.ProjectDescription} - {group.TotalDuration.Hours} ч {group.TotalDuration.Minutes} мин", font, XBrushes.Black,
+                    new XRect(leftMargin + cellPadding, yPoint + cellPadding, tableWidth - 2 * cellPadding, font.GetHeight()), XStringFormats.TopLeft);
+                yPoint += font.GetHeight() + cellPadding;
 
                 if (yPoint > page.Height - 40)
                 {
@@ -556,6 +616,19 @@ namespace OfflineTimeTracker
                     gfx = XGraphics.FromPdfPage(page);
                     yPoint = 40;
                 }
+            }
+
+            // Задачи без проекта
+            var tasksWithoutProject = tasksInPeriod
+                .Where(task => string.IsNullOrWhiteSpace(task.ProjectDescription))
+                .ToList();
+
+            if (tasksWithoutProject.Any())
+            {
+                TimeSpan totalDuration = tasksWithoutProject.Aggregate(TimeSpan.Zero, (sum, task) => sum.Add(task.Duration));
+                gfx.DrawString($"Без проекта - {totalDuration.Hours} ч {totalDuration.Minutes} мин", font, XBrushes.Black,
+                    new XRect(leftMargin + cellPadding, yPoint + cellPadding, tableWidth - 2 * cellPadding, font.GetHeight()), XStringFormats.TopLeft);
+                yPoint += font.GetHeight() + cellPadding;
             }
 
             // Сохранение файла
@@ -570,6 +643,32 @@ namespace OfflineTimeTracker
             }
         }
 
-        
+
+
+        private string[] SplitText(string text, int maxLineLength)
+        {
+            List<string> lines = new List<string>();
+
+            while (text.Length > 0)
+            {
+                int lineLength = text.Length > maxLineLength ? maxLineLength : text.Length;
+                string line = text.Substring(0, lineLength);
+
+                // Ищем последнее пробел для переноса
+                int lastSpace = line.LastIndexOf(' ');
+                if (lastSpace > 0 && lineLength == maxLineLength)
+                {
+                    line = line.Substring(0, lastSpace);
+                    lineLength = lastSpace + 1;
+                }
+
+                lines.Add(line);
+                text = text.Substring(lineLength);
+            }
+
+            return lines.ToArray();
+        }
+
+
     }
 }

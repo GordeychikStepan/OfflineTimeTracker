@@ -8,6 +8,9 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Resources\time100.ico</ApplicationIcon>
     <UseWindowsForms>True</UseWindowsForms>
+    <NeutralLanguage>ru</NeutralLanguage>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

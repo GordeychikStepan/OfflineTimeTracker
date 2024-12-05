@@ -32,6 +32,7 @@
                             <TextBox x:Name="TaskDescription" 
                                      materialDesign:HintAssist.Hint="Описание задачи" 
                                      MaxLength="40" FontSize="18" Width="400" 
+                                     materialDesign:TextFieldAssist.HasClearButton="True"
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"/>
                             <ComboBox x:Name="TaskComboBox" Width="140" Margin="10,16,0,0"
                                       SelectionChanged="TaskComboBox_SelectionChanged"
@@ -45,6 +46,7 @@
                             <TextBox x:Name="ProjectDescription" 
                                      materialDesign:HintAssist.Hint="Проект" 
                                      MaxLength="40" FontSize="18" Width="400" 
+                                     materialDesign:TextFieldAssist.HasClearButton="True"
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"/>
                             <ComboBox x:Name="ProjectComboBox" Width="140" Margin="10,16,0,0"
                                       SelectionChanged="ProjectComboBox_SelectionChanged"
@@ -64,9 +66,6 @@
 
                     
                 </materialDesign:Card>
-
-
-
 
 
 
