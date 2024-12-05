@@ -126,54 +126,54 @@
                             <ListView x:Name="TaskListView" Height="328.5" ScrollViewer.CanContentScroll="True">
                                 <ListView.ItemTemplate>
                                     <DataTemplate>
-                                    <Border BorderThickness="0,0,0,1" BorderBrush="Gray" Padding="5">
-                                        <StackPanel Orientation="Vertical" Width="510">
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
-                                                <!-- Отображение названия задачи -->
-                                                <TextBlock Text="{Binding Description}" FontWeight="Bold" Width="425" />
+                                        <Border BorderThickness="0,0,0,1" BorderBrush="Gray" Padding="5">
+                                            <StackPanel Orientation="Vertical" Width="510">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
+                                                    <!-- Отображение названия задачи -->
+                                                    <TextBlock Text="{Binding Description}" FontWeight="Bold" Width="425" />
 
-                                                <!-- Кнопка "Редактировать" -->
-                                                <Button Width="30" 
-                                                        Height="30"
-                                                        Margin="20,0,0,0"
-                                                        ToolTip="Редактировать"
-                                                        Style="{StaticResource MaterialDesignIconButton}"
-                                                        Command="{Binding DataContext.EditTaskCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                                                        CommandParameter="{Binding}" >
+                                                    <!-- Кнопка "Редактировать" -->
+                                                    <Button Width="30" 
+                                                            Height="30"
+                                                            Margin="20,0,0,0"
+                                                            ToolTip="Редактировать"
+                                                            Style="{StaticResource MaterialDesignIconButton}"
+                                                            Command="{Binding DataContext.EditTaskCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                            CommandParameter="{Binding}" >
 
-                                                    <materialDesign:PackIcon
-                                                        Width="20"
-                                                        Height="20"
-                                                        Kind="CircleEditOutline"/>
+                                                        <materialDesign:PackIcon
+                                                            Width="20"
+                                                            Height="20"
+                                                            Kind="CircleEditOutline"/>
 
-                                                </Button>
+                                                    </Button>
 
-                                                <!-- Кнопка "Удалить" -->
-                                                <Button Width="30" 
-                                                        Height="30"
-                                                        Margin="0,0,0,0"
-                                                        ToolTip="Удалить"
-                                                        Style="{StaticResource MaterialDesignIconButton}"
-                                                        Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                                                        CommandParameter="{Binding}" >
-                                                    <materialDesign:PackIcon
-                                                        Width="20"
-                                                        Height="20"
-                                                        Kind="DeleteCircleOutline"/>
-                                                </Button>
+                                                    <!-- Кнопка "Удалить" -->
+                                                    <Button Width="30" 
+                                                            Height="30"
+                                                            Margin="0,0,0,0"
+                                                            ToolTip="Удалить"
+                                                            Style="{StaticResource MaterialDesignIconButton}"
+                                                            Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                            CommandParameter="{Binding}" >
+                                                        <materialDesign:PackIcon
+                                                            Width="20"
+                                                            Height="20"
+                                                            Kind="DeleteCircleOutline"/>
+                                                    </Button>
+                                                </StackPanel>
+
+                                                <!-- Проект -->
+                                                <TextBlock Text="{Binding ProjectDescription, Converter={StaticResource ProjectDescriptionConverter}}" FontWeight="DemiBold" Margin="0,0,0,5" />
+
+                                                <!-- Остальная информация -->
+                                                <TextBlock Text="{Binding StartTime, StringFormat='Начало: {0:HH:mm:ss}'}" />
+                                                <TextBlock Text="{Binding EndTime, StringFormat='Конец: {0:HH:mm:ss}'}" />
+                                                <TextBlock Text="{Binding Duration, StringFormat='Длительность: {0:h\\:mm\\:ss\\.f}'}" />
+
                                             </StackPanel>
-
-                                            <!-- Проект -->
-                                            <TextBlock Text="{Binding ProjectDescription, Converter={StaticResource ProjectDescriptionConverter}}" FontWeight="DemiBold" Margin="0,0,0,5" />
-
-                                            <!-- Остальная информация -->
-                                            <TextBlock Text="{Binding StartTime, StringFormat='Начало: {0:HH:mm:ss}'}" />
-                                            <TextBlock Text="{Binding EndTime, StringFormat='Конец: {0:HH:mm:ss}'}" />
-                                            <TextBlock Text="{Binding Duration, StringFormat='Длительность: {0:h\\:mm\\:ss\\.f}'}" />
-
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
+                                        </Border>
+                                    </DataTemplate>
                                 </ListView.ItemTemplate>
                             </ListView>
                             <!-- Текстовое сообщение при отсутствии задач -->

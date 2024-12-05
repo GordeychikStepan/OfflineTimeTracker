@@ -6,6 +6,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d" Height="250" Width="444">
+    
     <Grid Margin="10">
         <StackPanel>
             <TextBlock Text="Сформировать отчет" FontSize="24" TextAlignment="Center" Margin="5,0,5,20" />

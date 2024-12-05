@@ -11,6 +11,7 @@ using PdfSharp.Pdf;
 using OfflineTimeTracker.Service;
 using MaterialDesignThemes.Wpf;
 using MessageBox = System.Windows.MessageBox;
+using OfflineTimeTracker.Controls;
 
 namespace OfflineTimeTracker
 {
@@ -233,27 +234,20 @@ namespace OfflineTimeTracker
             System.Windows.Application.Current.Shutdown();
         }
 
-        private void EditTask(object parameter)
+        private async void EditTask(object parameter)
         {
             if (parameter is TaskEntry task)
             {
-                // Проверяем корректность параметра
-                if (task == null)
-                {
-                    MessageBox.Show("Задача не найдена!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
+                // Создаем экземпляр диалога редактирования
+                var dialog = new EditTaskDialog(task, taskEntries);
 
-                // Открываем диалоговое окно для редактирования задачи
-                string newDescription = Microsoft.VisualBasic.Interaction.InputBox(
-                    "Введите новое название задачи:",
-                    "Редактирование задачи",
-                    task.Description);
+                // Показываем диалог
+                var result = await DialogHost.Show(dialog, "RootDialog");
 
-                if (!string.IsNullOrWhiteSpace(newDescription))
+                if (result is TaskEntry updatedTask)
                 {
-                    task.Description = newDescription;
-                    SaveTasks(); // Сохраняем изменения
+                    // Сохраняем изменения
+                    SaveTasks();
                     UpdateTaskListView();
                     UpdateTaskComboBox();
                     UpdateProjectComboBox();
@@ -265,6 +259,7 @@ namespace OfflineTimeTracker
                 MessageBox.Show("Неверный тип данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
 
 
         private void DeleteTask(object parameter)
